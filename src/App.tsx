@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Camera, FileText, Send } from "lucide-react";
 import "./App.css";
 
 interface Message {
@@ -15,6 +16,7 @@ function App() {
 
   useEffect(() => {
     const listener = (message: any) => {
+      setLoading(false); // Stop loading when any response comes back
       if (message.type === "captureResponse") {
         if (message.error) {
           console.error("Capture failed:", message.error);
@@ -32,6 +34,17 @@ function App() {
           };
           setMessages((prevMessages) => [...prevMessages, userMessage]);
         }
+      } else if (message.type === "textResponse") {
+        if (message.error) {
+          const errorMessage: Message = {
+            text: `Error reading page: ${message.error}`,
+            sender: "bot",
+          };
+          setMessages((prevMessages) => [...prevMessages, errorMessage]);
+        } else if (message.text) {
+          const prompt = `Please summarize the following text:\n\n${message.text}`;
+          setInput(prompt);
+        }
       }
     };
     chrome.runtime.onMessage.addListener(listener);
@@ -40,30 +53,14 @@ function App() {
     };
   }, []);
 
-  const handleCapture = () => {
-    chrome.runtime.sendMessage({ type: "captureScreen" });
+  const handleActionClick = (type: "captureScreen" | "getText") => {
+    setLoading(true);
+    chrome.runtime.sendMessage({ type });
   };
 
   const handleReadPage = () => {
-    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-      if (tabs[0] && tabs[0].id) {
-        chrome.tabs.sendMessage(tabs[0].id, { type: "getText" }, (response) => {
-          if (chrome.runtime.lastError) {
-            console.error(chrome.runtime.lastError.message);
-            const errorMessage: Message = {
-              text: `Error reading page: ${chrome.runtime.lastError.message}`,
-              sender: "bot",
-            };
-            setMessages((prevMessages) => [...prevMessages, errorMessage]);
-          } else if (response && response.text) {
-            const prompt = `Please summarize the following text:\n\n${response.text}`;
-            setInput(prompt);
-            // Optionally, send it to the LLM automatically
-            // handleSend();
-          }
-        });
-      }
-    });
+    setLoading(true);
+    chrome.runtime.sendMessage({ type: "getText" });
   };
 
   const handleSend = async () => {
@@ -166,19 +163,29 @@ function App() {
             placeholder={loading ? "Gemma is thinking..." : "Ask Gemma..."}
             disabled={loading}
           />
-          <button onClick={handleSend} disabled={loading}>
-            {loading ? "..." : "Send"}
-          </button>
-          <button id="capture-btn" onClick={handleCapture} disabled={loading}>
-            Capture
-          </button>
-          <button
-            id="read-page-btn"
-            onClick={handleReadPage}
-            disabled={loading}
-          >
-            Read Page
-          </button>
+          <div className="action-buttons">
+            <button
+              className="icon-btn"
+              onClick={handleSend}
+              disabled={loading}
+            >
+              <Send size={20} />
+            </button>
+            <button
+              className="icon-btn"
+              onClick={() => handleActionClick("captureScreen")}
+              disabled={loading}
+            >
+              <Camera size={20} />
+            </button>
+            <button
+              className="icon-btn"
+              onClick={() => handleActionClick("getText")}
+              disabled={loading}
+            >
+              <FileText size={20} />
+            </button>
+          </div>
         </div>
       </div>
     </div>

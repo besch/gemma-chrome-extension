@@ -2,17 +2,28 @@ chrome.sidePanel
   .setPanelBehavior({ openPanelOnActionClick: true })
   .catch((error) => console.error(error));
 
-chrome.runtime.onMessage.addListener((message, sender) => {
-  if (message.type === "captureScreen") {
-    const tab = sender.tab;
-    if (tab && tab.windowId) {
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  // Query for the active tab to ensure we have a target for the actions.
+  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+    const activeTab = tabs[0];
+    if (!activeTab || !activeTab.id) {
+      const error =
+        "Could not find an active tab. Please focus a tab to interact with.";
+      // Send an error response back for the appropriate action type.
+      if (message.type === "captureScreen") {
+        chrome.runtime.sendMessage({ type: "captureResponse", error });
+      } else if (message.type === "getText") {
+        chrome.runtime.sendMessage({ type: "textResponse", error });
+      }
+      return;
+    }
+
+    if (message.type === "captureScreen") {
       chrome.tabs.captureVisibleTab(
-        tab.windowId,
+        activeTab.windowId,
         { format: "png" },
         (dataUrl) => {
           if (chrome.runtime.lastError) {
-            console.error(chrome.runtime.lastError.message);
-            // Optionally send an error response back to the side panel
             chrome.runtime.sendMessage({
               type: "captureResponse",
               error: chrome.runtime.lastError.message,
@@ -22,31 +33,37 @@ chrome.runtime.onMessage.addListener((message, sender) => {
           }
         }
       );
-    } else {
-      // Fallback for when sender.tab is not available, e.g. from the extension's own pages
-      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-        if (tabs[0] && tabs[0].id) {
-          chrome.tabs.captureVisibleTab(
-            tabs[0].windowId,
-            { format: "png" },
-            (dataUrl) => {
-              if (chrome.runtime.lastError) {
-                console.error(chrome.runtime.lastError.message);
-                chrome.runtime.sendMessage({
-                  type: "captureResponse",
-                  error: chrome.runtime.lastError.message,
-                });
-              } else {
-                chrome.runtime.sendMessage({
-                  type: "captureResponse",
-                  dataUrl,
-                });
-              }
-            }
-          );
+    } else if (message.type === "getText") {
+      chrome.scripting.executeScript(
+        {
+          target: { tabId: activeTab.id },
+          func: () => document.body.innerText,
+        },
+        (injectionResults) => {
+          if (chrome.runtime.lastError) {
+            chrome.runtime.sendMessage({
+              type: "textResponse",
+              error: chrome.runtime.lastError.message,
+            });
+          } else if (
+            injectionResults &&
+            injectionResults[0] &&
+            injectionResults[0].result
+          ) {
+            chrome.runtime.sendMessage({
+              type: "textResponse",
+              text: injectionResults[0].result,
+            });
+          } else {
+            chrome.runtime.sendMessage({
+              type: "textResponse",
+              error: "Could not get text from the page.",
+            });
+          }
         }
-      });
+      );
     }
-    return true; // Indicates that the response is sent asynchronously
-  }
+  });
+
+  return true; // Indicates that the response is sent asynchronously
 });

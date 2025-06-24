@@ -4,17 +4,11 @@
   "version": "1.0",
   "description": "An agentic Chrome extension that uses a local Gemma model to interact with websites.",
   "permissions": ["sidePanel", "activeTab", "scripting", "storage"],
-  "host_permissions": ["http://localhost:1234/*"],
+  "host_permissions": ["<all_urls>"],
   "background": {
     "service_worker": "background.js",
     "type": "module"
   },
-  "content_scripts": [
-    {
-      "matches": ["<all_urls>"],
-      "js": ["content.js"]
-    }
-  ],
   "action": {
     "default_title": "Open Gemma Vision Agent"
   },
