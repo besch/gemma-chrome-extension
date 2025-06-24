@@ -11,6 +11,7 @@ function App() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const listener = (message: any) => {
@@ -66,21 +67,35 @@ function App() {
   };
 
   const handleSend = async () => {
-    if (!input.trim() && !capturedImage) return;
+    if ((!input.trim() && !capturedImage) || loading) return;
 
+    setLoading(true);
+    // Add user message to UI
     const userMessage: Message = {
       text: input,
       sender: "user",
       image: capturedImage || undefined,
     };
-    setMessages((prevMessages) => [...prevMessages, userMessage]);
+    const newMessages = [...messages, userMessage];
+    setMessages(newMessages);
 
-    const llmInput = capturedImage
-      ? [
-          { type: "text", text: input },
-          { type: "image_url", image_url: { url: capturedImage } },
-        ]
-      : [{ role: "user", content: input }];
+    // Prepare messages for the API
+    const apiMessages = newMessages.map((msg) => {
+      let content;
+      if (msg.image) {
+        content = [
+          { type: "text", text: msg.text },
+          { type: "image_url", image_url: { url: msg.image } },
+        ];
+      } else {
+        content = msg.text;
+      }
+
+      return {
+        role: msg.sender === "user" ? "user" : "assistant",
+        content: content,
+      };
+    });
 
     setInput("");
     setCapturedImage(null);
@@ -95,7 +110,7 @@ function App() {
           },
           body: JSON.stringify({
             model: "gemma-3.4b", // Or whatever model you have loaded
-            messages: [{ role: "user", content: llmInput }],
+            messages: apiMessages,
             stream: false,
           }),
         }
@@ -120,6 +135,8 @@ function App() {
         sender: "bot",
       };
       setMessages((prevMessages) => [...prevMessages, errorMessage]);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -146,13 +163,20 @@ function App() {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyPress={(e) => e.key === "Enter" && handleSend()}
-            placeholder="Ask Gemma..."
+            placeholder={loading ? "Gemma is thinking..." : "Ask Gemma..."}
+            disabled={loading}
           />
-          <button onClick={handleSend}>Send</button>
-          <button id="capture-btn" onClick={handleCapture}>
+          <button onClick={handleSend} disabled={loading}>
+            {loading ? "..." : "Send"}
+          </button>
+          <button id="capture-btn" onClick={handleCapture} disabled={loading}>
             Capture
           </button>
-          <button id="read-page-btn" onClick={handleReadPage}>
+          <button
+            id="read-page-btn"
+            onClick={handleReadPage}
+            disabled={loading}
+          >
             Read Page
           </button>
         </div>
