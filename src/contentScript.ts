@@ -35,12 +35,15 @@ function createBrushCanvas() {
   brushCanvas.style.top = '0';
   brushCanvas.style.width = '100vw';
   brushCanvas.style.height = '100vh';
-  brushCanvas.style.zIndex = '999999';
+  brushCanvas.style.zIndex = '2147483647'; // max z-index
   brushCanvas.style.pointerEvents = 'none';
   brushCanvas.style.background = 'transparent';
+  brushCanvas.setAttribute('data-gemma-brush', 'true');
   document.body.appendChild(brushCanvas);
   brushCtx = brushCanvas.getContext('2d');
   if (brushCtx) {
+    brushCtx.setTransform(1, 0, 0, 1, 0, 0); // reset any previous transform
+    brushCtx.clearRect(0, 0, brushCanvas.width, brushCanvas.height);
     brushCtx.scale(window.devicePixelRatio, window.devicePixelRatio);
     brushCtx.strokeStyle = '#4f8cff';
     brushCtx.lineWidth = 3;
@@ -51,11 +54,16 @@ function createBrushCanvas() {
 
 function onMouseDown(e: MouseEvent) {
   if (e.button !== 0) return;
-  // Only allow drawing if pointerEvents are set to 'none' (so canvas doesn't block events)
-  if (brushCanvas && brushCanvas.style.pointerEvents !== 'none') return;
-  removeBrushCanvas();
+  // Only allow drawing if brush tool is active (canvas exists)
+  if (!brushCanvas) {
+    createBrushCanvas();
+  }
+  // Only start drawing if the event target is NOT a UI element from the page or sidebar
+  if ((e.target as HTMLElement)?.closest('[data-gemma-brush]')) {
+    // Prevent drawing on our own overlay
+    return;
+  }
   removeContextMenu();
-  createBrushCanvas();
   // Enable pointer events so canvas can receive mouse events
   if (brushCanvas) brushCanvas.style.pointerEvents = 'auto';
   isDrawing = true;
@@ -137,15 +145,30 @@ function captureAndSendBrush() {
 }
 
 // Listen for activation from extension (so it doesn't always run)
-chrome.runtime.onMessage.addListener((msg) => {
+let brushActive = false;
+chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg.type === 'activateSelection') {
-    window.addEventListener('mousedown', onMouseDown, { capture: true });
+    if (!brushActive) {
+      window.addEventListener('mousedown', onMouseDown, { capture: true });
+      brushActive = true;
+      // Visual feedback: show a temporary overlay or log
+      console.debug('[Gemma] Brush tool activated');
+    }
+    sendResponse?.({ ok: true });
   } else if (msg.type === 'deactivateSelection') {
-    window.removeEventListener('mousedown', onMouseDown, { capture: true });
-    removeBrushCanvas();
-    removeContextMenu();
+    if (brushActive) {
+      window.removeEventListener('mousedown', onMouseDown, { capture: true });
+      removeBrushCanvas();
+      removeContextMenu();
+      brushActive = false;
+      // Visual feedback: show a temporary overlay or log
+      console.debug('[Gemma] Brush tool deactivated');
+    }
+    sendResponse?.({ ok: true });
   }
 });
+// Debug: always log when script loads
+console.debug('[Gemma] contentScript loaded');
 
 // Clean up on navigation
 window.addEventListener('beforeunload', () => {
