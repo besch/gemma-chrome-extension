@@ -53,6 +53,11 @@ function createBrushCanvas() {
 }
 
 function onMouseDown(e: MouseEvent) {
+  // If the click is on our context menu, do nothing.
+  if ((e.target as HTMLElement).closest('[data-gemma-context-menu]')) {
+    return;
+  }
+
   if (e.button !== 0) return;
   // Only allow drawing if brush tool is active (canvas exists)
   if (!brushCanvas) {
@@ -109,6 +114,7 @@ function showContextMenu(x: number, y: number) {
   contextMenu.style.fontFamily = 'sans-serif';
   contextMenu.style.cursor = 'pointer';
   contextMenu.style.color = '#333'; // Set text color
+  contextMenu.setAttribute('data-gemma-context-menu', 'true'); // Add identifier
   contextMenu.textContent = 'Analyze section';
   contextMenu.addEventListener('click', () => {
     captureAndSendBrush();
