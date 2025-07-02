@@ -3,7 +3,7 @@
   "name": "Gemma Vision Agent",
   "version": "1.0",
   "description": "An agentic Chrome extension that uses a local Gemma model to interact with websites.",
-  "permissions": ["sidePanel", "activeTab", "scripting", "storage"],
+  "permissions": ["sidePanel", "activeTab", "scripting", "storage", "offscreen"],
   "host_permissions": ["<all_urls>"],
   "background": {
     "service_worker": "background.js",
@@ -14,6 +14,12 @@
       "matches": ["<all_urls>"],
       "js": ["contentScript.js"],
       "run_at": "document_idle"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["microphone-access.html", "offscreen.html"],
+      "matches": ["<all_urls>"]
     }
   ],
   "action": {

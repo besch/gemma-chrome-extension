@@ -10,6 +10,8 @@ export default defineConfig({
         main: "index.html",
         background: "src/background.ts",
         contentScript: "src/contentScript.ts",
+        microphoneAccess: "src/microphone-access.ts",
+        offscreen: "src/offscreen.ts",
       },
       output: {
         entryFileNames: (chunkInfo) => {
@@ -18,6 +20,12 @@ export default defineConfig({
           }
           if (chunkInfo.name === "contentScript") {
             return "contentScript.js";
+          }
+          if (chunkInfo.name === "microphoneAccess") {
+            return "microphone-access.js";
+          }
+          if (chunkInfo.name === "offscreen") {
+            return "offscreen.js";
           }
           return "assets/[name].js";
         },

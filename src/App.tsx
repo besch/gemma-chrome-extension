@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { Camera, FileText, Send, Pencil } from "lucide-react";
+import { Camera, FileText, Send, Pencil, Mic } from "lucide-react";
 import "./App.css";
 
 // Helper to crop a base64 PNG dataUrl to a given rectangle
@@ -42,6 +42,7 @@ function App() {
   const [input, setInput] = useState("");
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
 
   useEffect(() => {
     const listener = async (message: any) => {
@@ -131,6 +132,16 @@ function App() {
             { text: `Error: ${message.error}`, sender: "bot" },
           ]);
         }
+      } else if (message.type === 'audio-recorded') {
+        setLoading(false);
+        const audioDataUrl = message.data;
+        // Here you would typically send the audioDataUrl to your LLM
+        // For now, let's just display a message
+        const userMessage: Message = {
+          text: "Audio recorded. (Integration with LLM for audio not yet implemented)",
+          sender: "user",
+        };
+        setMessages((prev) => [...prev, userMessage]);
       }
     };
     chrome.runtime.onMessage.addListener(listener);
@@ -241,6 +252,25 @@ function App() {
     }
   };
 
+  const handleMicrophoneClick = async () => {
+    if (isRecording) {
+      chrome.runtime.sendMessage({ type: 'stop-recording' });
+      setIsRecording(false);
+    } else {
+      // Check for microphone permission first
+      const permissionStatus = await navigator.permissions.query({ name: 'microphone' as PermissionName });
+      if (permissionStatus.state === 'granted') {
+        chrome.runtime.sendMessage({ type: 'start-recording' });
+        setIsRecording(true);
+      } else if (permissionStatus.state === 'prompt') {
+        // Open a new window to request permission
+        chrome.runtime.sendMessage({ type: 'open-microphone-access' });
+      } else if (permissionStatus.state === 'denied') {
+        alert('Microphone access denied. Please enable it in your browser settings.');
+      }
+    }
+  };
+
   return (
     <div className="App">
       <div className="chat-window">
@@ -304,6 +334,15 @@ function App() {
               style={isBrushActive ? { background: '#4f8cff', color: '#fff' } : {}}
             >
               <Pencil size={20} />
+            </button>
+            <button
+              className={`icon-btn${isRecording ? ' active' : ''}`}
+              onClick={handleMicrophoneClick}
+              disabled={loading}
+              title={isRecording ? 'Stop recording' : 'Start recording'}
+              style={isRecording ? { background: '#ff4f4f', color: '#fff' } : {}}
+            >
+              <Mic size={20} />
             </button>
           </div>
         </div>

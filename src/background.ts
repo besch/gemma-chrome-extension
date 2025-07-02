@@ -1,8 +1,46 @@
+let creating: Promise<void> | null;
+
+async function createOffscreenDocument() {
+  // Check if we already have an offscreen document.
+  if (await chrome.offscreen.hasDocument()) {
+    return;
+  }
+
+  // create an offscreen document.
+  if (creating) {
+    await creating;
+  } else {
+    creating = chrome.offscreen.createDocument({
+      url: 'offscreen.html',
+      reasons: [chrome.offscreen.Reason.USER_MEDIA],
+      justification: 'Recording microphone audio',
+    });
+    await creating;
+    creating = null;
+  }
+}
+
 chrome.sidePanel
   .setPanelBehavior({ openPanelOnActionClick: true })
   .catch((error) => console.error(error));
 
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
+  if (message.type === 'start-recording' || message.type === 'stop-recording') {
+    await createOffscreenDocument();
+    chrome.runtime.sendMessage({ ...message, target: 'offscreen' });
+    return;
+  }
+
+  if (message.type === 'open-microphone-access') {
+    chrome.windows.create({
+      url: chrome.runtime.getURL('microphone-access.html'),
+      type: 'popup',
+      width: 400,
+      height: 300,
+    });
+    return;
+  }
+
   // Query for the active tab to ensure we have a target for the actions.
   chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
     const activeTab = tabs[0];
