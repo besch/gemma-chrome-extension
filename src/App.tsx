@@ -133,15 +133,79 @@ function App() {
           ]);
         }
       } else if (message.type === 'audio-recorded') {
-        setLoading(false);
+        setLoading(true);
         const audioDataUrl = message.data;
-        // Here you would typically send the audioDataUrl to your LLM
-        // For now, let's just display a message
+
         const userMessage: Message = {
-          text: "Audio recorded. (Integration with LLM for audio not yet implemented)",
+          text: "Transcribing audio...",
           sender: "user",
         };
         setMessages((prev) => [...prev, userMessage]);
+
+        try {
+          // Send audio to local STT server
+          const sttResponse = await fetch("http://localhost:5000/transcribe", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ audio: audioDataUrl }),
+          });
+
+          if (!sttResponse.ok) {
+            throw new Error(`STT server error! status: ${sttResponse.status}`);
+          }
+
+          const sttData = await sttResponse.json();
+          const transcribedText = sttData.text;
+
+          const transcribedMessage: Message = {
+            text: `Transcribed: "${transcribedText}"\nSending to LLM...`,
+            sender: "user",
+          };
+          setMessages((prev) => [...prev, transcribedMessage]);
+
+          // Prepare LLM payload with transcribed text
+          const apiMessages = [
+            {
+              role: "user",
+              content: [
+                { type: "text", text: `Analyze the following audio transcription: ${transcribedText}` },
+              ],
+            },
+          ];
+
+          const llmResponse = await fetch("http://localhost:1234/v1/chat/completions", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              model: "gemma-3.4b",
+              messages: apiMessages,
+              stream: false,
+            }),
+          });
+
+          if (!llmResponse.ok) {
+            throw new Error(`LLM server error! status: ${llmResponse.status}`);
+          }
+
+          const llmData = await llmResponse.json();
+          const botMessage: Message = {
+            text:
+              llmData.choices[0]?.message?.content ||
+              "Sorry, I had trouble getting a response from the LLM.",
+            sender: "bot",
+          };
+          setMessages((prev) => [...prev, botMessage]);
+
+        } catch (error) {
+          console.error("Failed to process audio:", error);
+          const errorMessage: Message = {
+            text: `Error processing audio: ${error instanceof Error ? error.message : String(error)}`,
+            sender: "bot",
+          };
+          setMessages((prev) => [...prev, errorMessage]);
+        } finally {
+          setLoading(false);
+        }
       }
     };
     chrome.runtime.onMessage.addListener(listener);
