@@ -9,11 +9,15 @@ export default defineConfig({
       input: {
         main: "index.html",
         background: "src/background.ts",
+        contentScript: "src/contentScript.ts",
       },
       output: {
         entryFileNames: (chunkInfo) => {
           if (chunkInfo.name === "background") {
             return "background.js";
+          }
+          if (chunkInfo.name === "contentScript") {
+            return "contentScript.js";
           }
           return "assets/[name].js";
         },

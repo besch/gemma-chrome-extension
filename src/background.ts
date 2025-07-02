@@ -62,6 +62,24 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           }
         }
       );
+    } else if (message.type === 'analyzeArea') {
+      // 1. Capture the visible tab as an image
+      chrome.tabs.captureVisibleTab(activeTab.windowId, { format: 'png' }, (dataUrl) => {
+        if (chrome.runtime.lastError || !dataUrl) {
+          chrome.runtime.sendMessage({
+            type: 'analyzeResult',
+            error: chrome.runtime.lastError?.message || 'Failed to capture tab.'
+          });
+          return;
+        }
+        // 2. Crop the image to the selected area
+        // Send to side panel for cropping and LLM analysis
+        chrome.runtime.sendMessage({
+          type: 'cropAndAnalyze',
+          dataUrl,
+          area: message.area
+        });
+      });
     }
   });
 
