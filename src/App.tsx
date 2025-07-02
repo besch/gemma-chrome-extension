@@ -1,4 +1,9 @@
 import { useState, useEffect } from "react";
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import { Camera, FileText, Send, Pencil } from "lucide-react";
+import "./App.css";
+
 // Helper to crop a base64 PNG dataUrl to a given rectangle
 async function cropImage(dataUrl: string, area: { left: number; top: number; width: number; height: number; devicePixelRatio: number }) {
   return new Promise<string>((resolve, reject) => {
@@ -25,8 +30,6 @@ async function cropImage(dataUrl: string, area: { left: number; top: number; wid
     img.src = dataUrl;
   });
 }
-import { Camera, FileText, Send, Pencil } from "lucide-react";
-import "./App.css";
 
 interface Message {
   text: string;
@@ -135,6 +138,7 @@ function App() {
       chrome.runtime.onMessage.removeListener(listener);
     };
   }, []);
+
   // Activate selection tool in content script
   const [isBrushActive, setIsBrushActive] = useState(false);
   function activateSelection() {
@@ -157,23 +161,10 @@ function App() {
     chrome.runtime.onMessage.addListener(off);
     return () => chrome.runtime.onMessage.removeListener(off);
   }, []);
-        <button
-          className="icon-btn"
-          onClick={activateSelection}
-          disabled={loading}
-          title="Select area on page"
-        >
-          🖌️
-        </button>
 
   const handleActionClick = (type: "captureScreen" | "getText") => {
     setLoading(true);
     chrome.runtime.sendMessage({ type });
-  };
-
-  const handleReadPage = () => {
-    setLoading(true);
-    chrome.runtime.sendMessage({ type: "getText" });
   };
 
   const handleSend = async () => {
@@ -263,7 +254,11 @@ function App() {
                   className="captured-image"
                 />
               )}
-              {msg.text}
+              {msg.sender === 'bot' ? (
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.text}</ReactMarkdown>
+              ) : (
+                msg.text
+              )}
             </div>
           ))}
         </div>
