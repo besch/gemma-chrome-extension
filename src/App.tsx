@@ -138,13 +138,15 @@ function App() {
   // Activate selection tool in content script
   const [isBrushActive, setIsBrushActive] = useState(false);
   function activateSelection() {
-    if (!isBrushActive) {
-      chrome.runtime.sendMessage({ type: 'activateSelection' });
-      setIsBrushActive(true);
-    } else {
-      chrome.runtime.sendMessage({ type: 'deactivateSelection' });
-      setIsBrushActive(false);
-    }
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      if (tabs[0] && tabs[0].id) {
+        const newBrushState = !isBrushActive;
+        chrome.tabs.sendMessage(tabs[0].id, {
+          type: newBrushState ? 'activateSelection' : 'deactivateSelection'
+        });
+        setIsBrushActive(newBrushState);
+      }
+    });
   }
 
   // Listen for brush tool deactivation from content script (optional, for robustness)
