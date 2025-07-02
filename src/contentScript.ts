@@ -105,9 +105,10 @@ function showContextMenu(x: number, y: number) {
   contextMenu.style.borderRadius = '6px';
   contextMenu.style.boxShadow = '0 2px 8px rgba(0,0,0,0.15)';
   contextMenu.style.padding = '8px 12px';
-  contextMenu.style.zIndex = '1000000';
+  contextMenu.style.zIndex = '2147483647';
   contextMenu.style.fontFamily = 'sans-serif';
   contextMenu.style.cursor = 'pointer';
+  contextMenu.style.color = '#333'; // Set text color
   contextMenu.textContent = 'Analyze section';
   contextMenu.addEventListener('click', () => {
     captureAndSendBrush();
