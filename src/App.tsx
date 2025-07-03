@@ -35,6 +35,7 @@ interface Message {
   text: string;
   sender: "user" | "bot";
   image?: string;
+  isTyping?: boolean; // Add this line
 }
 
 function App() {
@@ -307,10 +308,17 @@ function App() {
     } catch (error) {
       console.error("Failed to fetch from local LLM:", error);
       const errorMessage: Message = {
-        text: "Error: Could not connect to the local model. Make sure it is running.",
-        sender: "bot",
-      };
-      setMessages((prevMessages) => [...prevMessages, errorMessage]);
+            text: "Error: Could not connect to the local model. Make sure it is running.",
+            sender: "bot",
+          };
+          setMessages((prevMessages) => {
+            const newMessages = [...prevMessages];
+            // Remove the typing indicator
+            if (newMessages.length > 0 && newMessages[newMessages.length - 1].isTyping) {
+              newMessages.pop();
+            }
+            return [...newMessages, errorMessage];
+          });
     } finally {
       setLoading(false);
     }
