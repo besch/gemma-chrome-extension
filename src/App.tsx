@@ -188,18 +188,18 @@ function App() {
               )}
             </div>
           ))}
-          <button
-            className="new-chat-btn"
-            onClick={() => {
-              setMessages([]);
-              setCapturedImage(null);
-            }}
-            disabled={loading}
-            title="Start New Chat"
-          >
-            <Plus size={20} />
-          </button>
         </div>
+        <button
+          className="new-chat-btn"
+          onClick={() => {
+            setMessages([]);
+            setCapturedImage(null);
+          }}
+          disabled={loading}
+          title="Start New Chat"
+        >
+          <Plus size={20} />
+        </button>
         <div className="input-area">
           <input
             type="text"
