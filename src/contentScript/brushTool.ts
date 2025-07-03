@@ -1,20 +1,9 @@
-// contentScript.ts
-// Handles drawing selection and context menu for area analysis
+// src/contentScript/brushTool.ts
 
-
-// --- Brush Drawing Implementation ---
 let isDrawing = false;
 let brushCanvas: HTMLCanvasElement | null = null;
 let brushCtx: CanvasRenderingContext2D | null = null;
 let brushPath: Array<{ x: number; y: number }> = [];
-let contextMenu: HTMLDivElement | null = null;
-
-function removeContextMenu() {
-  if (contextMenu) {
-    contextMenu.remove();
-    contextMenu = null;
-  }
-}
 
 function removeBrushCanvas() {
   if (brushCanvas) {
@@ -52,7 +41,7 @@ function createBrushCanvas() {
   }
 }
 
-function onMouseDown(e: MouseEvent) {
+function onMouseDown(e: MouseEvent, showContextMenu: (x: number, y: number) => void) {
   // If the click is on our context menu, do nothing.
   if ((e.target as HTMLElement).closest('[data-gemma-context-menu]')) {
     return;
@@ -68,7 +57,7 @@ function onMouseDown(e: MouseEvent) {
     // Prevent drawing on our own overlay
     return;
   }
-  removeContextMenu();
+  // removeContextMenu(); // This should be handled by the context menu module
   // Enable pointer events so canvas can receive mouse events
   if (brushCanvas) brushCanvas.style.pointerEvents = 'auto';
   isDrawing = true;
@@ -78,7 +67,7 @@ function onMouseDown(e: MouseEvent) {
     brushCtx.moveTo(e.clientX, e.clientY);
   }
   window.addEventListener('mousemove', onMouseMove);
-  window.addEventListener('mouseup', onMouseUp);
+  window.addEventListener('mouseup', (event) => onMouseUp(event, showContextMenu));
 }
 
 function onMouseMove(e: MouseEvent) {
@@ -88,40 +77,15 @@ function onMouseMove(e: MouseEvent) {
   brushCtx.stroke();
 }
 
-function onMouseUp(e: MouseEvent) {
+function onMouseUp(e: MouseEvent, showContextMenu: (x: number, y: number) => void) {
   if (!isDrawing) return;
   isDrawing = false;
   window.removeEventListener('mousemove', onMouseMove);
-  window.removeEventListener('mouseup', onMouseUp);
+  window.removeEventListener('mouseup', (event) => onMouseUp(event, showContextMenu));
   // Disable pointer events so canvas doesn't block page after drawing
   if (brushCanvas) brushCanvas.style.pointerEvents = 'none';
   // Show context menu at last mouse position
   showContextMenu(e.clientX, e.clientY);
-}
-
-function showContextMenu(x: number, y: number) {
-  removeContextMenu();
-  contextMenu = document.createElement('div');
-  contextMenu.style.position = 'fixed';
-  contextMenu.style.left = `${x + 8}px`;
-  contextMenu.style.top = `${y + 8}px`;
-  contextMenu.style.background = '#2a2a2a';
-  contextMenu.style.border = '1px solid #444444';
-  contextMenu.style.borderRadius = '6px';
-  contextMenu.style.boxShadow = '0 2px 8px rgba(0,0,0,0.15)';
-  contextMenu.style.padding = '8px 12px';
-  contextMenu.style.zIndex = '2147483647';
-  contextMenu.style.fontFamily = 'sans-serif';
-  contextMenu.style.cursor = 'pointer';
-  contextMenu.style.color = '#e0e0e0'; // Set text color
-  contextMenu.setAttribute('data-gemma-context-menu', 'true'); // Add identifier
-  contextMenu.textContent = 'Analyze section';
-  contextMenu.addEventListener('click', () => {
-    captureAndSendBrush();
-    removeContextMenu();
-    removeBrushCanvas();
-  });
-  document.body.appendChild(contextMenu);
 }
 
 function getBrushBoundingBox(path: Array<{ x: number; y: number }>) {
@@ -151,35 +115,22 @@ function captureAndSendBrush() {
   });
 }
 
-// Listen for activation from extension (so it doesn't always run)
-let brushActive = false;
-chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
-  if (msg.type === 'activateSelection') {
-    if (!brushActive) {
-      window.addEventListener('mousedown', onMouseDown, { capture: true });
-      brushActive = true;
-      // Visual feedback: show a temporary overlay or log
-      console.debug('[Gemma] Brush tool activated');
-    }
-    sendResponse?.({ ok: true });
-  } else if (msg.type === 'deactivateSelection') {
-    if (brushActive) {
-      window.removeEventListener('mousedown', onMouseDown, { capture: true });
-      removeBrushCanvas();
-      removeContextMenu();
-      brushActive = false;
-      // Visual feedback: show a temporary overlay or log
-      console.debug('[Gemma] Brush tool deactivated');
-    }
-    sendResponse?.({ ok: true });
-  }
-});
-// Debug: always log when script loads
-console.debug('[Gemma] contentScript loaded');
+export function activateBrushTool(showContextMenu: (x: number, y: number) => void) {
+  window.addEventListener('mousedown', (event) => onMouseDown(event, showContextMenu), { capture: true });
+  console.debug('[Gemma] Brush tool activated');
+}
 
-// Clean up on navigation
-window.addEventListener('beforeunload', () => {
+export function deactivateBrushTool() {
+  window.removeEventListener('mousedown', (event) => onMouseDown(event, () => {}), { capture: true }); // Pass empty function for showContextMenu
   removeBrushCanvas();
-  removeContextMenu();
-  window.removeEventListener('mousedown', onMouseDown, { capture: true });
-});
+  // removeContextMenu(); // This should be handled by the context menu module
+  console.debug('[Gemma] Brush tool deactivated');
+}
+
+export function cleanupBrushTool() {
+  removeBrushCanvas();
+  // removeContextMenu(); // This should be handled by the context menu module
+  window.removeEventListener('mousedown', (event) => onMouseDown(event, () => {}), { capture: true });
+}
+
+export { captureAndSendBrush };

@@ -8,8 +8,8 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: "index.html",
-        background: "src/background.ts",
-        contentScript: "src/contentScript.ts",
+        background: "src/background/index.ts",
+        contentScript: "src/contentScript/index.ts",
         microphoneAccess: "src/microphone-access.ts",
         offscreen: "src/offscreen.ts",
       },
