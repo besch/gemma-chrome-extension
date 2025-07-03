@@ -1,7 +1,7 @@
 // contentScript.ts
 // Handles drawing selection and context menu for area analysis
 
-import { activateBrushTool, deactivateBrushTool, captureAndSendBrush, cleanupBrushTool } from './brushTool';
+import { activateBrushTool, deactivateBrushTool, captureAndSendBrush, cleanupBrushTool, clearBrushSelection } from './brushTool';
 import { showContextMenu, removeContextMenu } from './contextMenu';
 
 let brushActive = false;
@@ -10,7 +10,20 @@ let brushActive = false;
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg.type === 'activateSelection') {
     if (!brushActive) {
-      activateBrushTool((x, y) => showContextMenu(x, y, captureAndSendBrush));
+      activateBrushTool((x, y) => showContextMenu(
+        x, y,
+        captureAndSendBrush,
+        () => {
+          clearBrushSelection();
+          removeContextMenu();
+          brushActive = false; // Deactivate brush after clearing
+          chrome.runtime.sendMessage({ type: 'deactivateBrushUI' }); // Inform UI
+        },
+        (prompt: string) => {
+          captureAndSendBrush(prompt);
+          removeContextMenu();
+        }
+      ));
       brushActive = true;
     }
     sendResponse?.({ ok: true });

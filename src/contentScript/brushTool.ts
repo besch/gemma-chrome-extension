@@ -105,14 +105,19 @@ function getBrushBoundingBox(path: Array<{ x: number; y: number }>) {
   };
 }
 
-function captureAndSendBrush() {
+export function captureAndSendBrush(prompt?: string) {
   if (!brushCanvas || brushPath.length < 2) return;
   // Get bounding box of the path
   const bbox = getBrushBoundingBox(brushPath);
   chrome.runtime.sendMessage({
     type: 'analyzeArea',
-    area: { ...bbox, devicePixelRatio: window.devicePixelRatio }
+    area: { ...bbox, devicePixelRatio: window.devicePixelRatio },
+    prompt: prompt || undefined,
   });
+}
+
+export function clearBrushSelection() {
+  removeBrushCanvas();
 }
 
 export function activateBrushTool(showContextMenu: (x: number, y: number) => void) {
@@ -123,14 +128,10 @@ export function activateBrushTool(showContextMenu: (x: number, y: number) => voi
 export function deactivateBrushTool() {
   window.removeEventListener('mousedown', (event) => onMouseDown(event, () => {}), { capture: true }); // Pass empty function for showContextMenu
   removeBrushCanvas();
-  // removeContextMenu(); // This should be handled by the context menu module
   console.debug('[Gemma] Brush tool deactivated');
 }
 
 export function cleanupBrushTool() {
   removeBrushCanvas();
-  // removeContextMenu(); // This should be handled by the context menu module
   window.removeEventListener('mousedown', (event) => onMouseDown(event, () => {}), { capture: true });
 }
-
-export { captureAndSendBrush };
