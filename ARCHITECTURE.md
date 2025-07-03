@@ -41,9 +41,17 @@ The architecture is composed of four main parts:
 - **API**: LM Studio exposes an **OpenAI-compatible API** at `http://localhost:1234`.
 - **Interaction**: The React UI communicates directly with this local server via standard `fetch` requests to the `/v1/chat/completions` endpoint, sending the conversation history (including images) and receiving the model's response.
 
+### e. Speech-to-Text (STT) Integration
+
+To enable voice input, the extension uses a combination of an offscreen document and a local Python server.
+
+-   **Offscreen Document (`offscreen.html`)**: Because Service Workers cannot directly access the microphone, an offscreen document is used to run the necessary `navigator.mediaDevices.getUserMedia` API. The background script creates and manages this document to handle audio recording.
+-   **Microphone Access Page (`microphone-access.html`)**: A dedicated HTML page is used to explicitly request microphone permissions from the user if they have not yet been granted.
+-   **STT Server (`stt_server.py`)**: A separate, local Flask server that exposes a `/transcribe` endpoint. It receives raw audio data, uses the `whisper` library to perform speech-to-text conversion, and returns the transcribed text. This server must be running locally for the feature to work.
+
 ## 3. Communication Flow & Data
 
-The components communicate through three primary channels:
+The components communicate through four primary channels:
 
 ### a. Chat with LLM
 
@@ -77,6 +85,24 @@ The components communicate through three primary channels:
 11. **App.tsx**: The cropped image is added to the chat UI, and a `fetch` request is sent to the local LLM with the image and a prompt to analyze it.
 12. **LM Studio**: Processes the request and returns the analysis.
 13. **App.tsx**: The response is received and rendered in the chat window using the `react-markdown` component for rich formatting.
+
+### d. Voice Recognition (Speech-to-Text)
+
+1.  **User**: Clicks the "Mic" icon in the side panel.
+2.  **App.tsx**: The `handleMicrophoneClick` function checks for microphone permissions using `navigator.permissions.query`.
+    *   If permissions are denied, it shows an alert.
+    *   If permissions are not yet granted (`prompt`), it sends an `open-microphone-access` message to the background script, which opens the dedicated `microphone-access.html` page to request permission.
+    *   If permissions are granted, it sends a `start-recording` message to the background script and updates the UI to a "recording" state.
+3.  **background.ts**: On receiving `start-recording`, it ensures an offscreen document is active (creating one via `offscreenManager.ts` if needed). It then forwards the `start-recording` message to the offscreen document.
+4.  **offscreen.ts**: The offscreen script calls `navigator.mediaDevices.getUserMedia` to start capturing audio. It sends the recorded audio data (as a `dataURL`) back to the background script when recording stops.
+5.  **User**: Clicks the "Mic" icon again to stop.
+6.  **App.tsx**: Sends a `stop-recording` message to the background script.
+7.  **background.ts**: Forwards the `stop-recording` message to the offscreen document.
+8.  **offscreen.ts**: Stops the media stream. The collected audio data is sent to the background script.
+9.  **background.ts**: Receives the audio `dataURL` and `POST`s it to the local STT server at `http://localhost:5000/transcribe`.
+10. **stt_server.py**: The Flask server receives the audio data, decodes it, saves it to a temporary file, transcribes it using the `whisper` model, and returns the resulting text as JSON.
+11. **background.ts**: Receives the transcribed text from the server and sends it to the side panel UI via a `transcription-result` message.
+12. **App.tsx**: A listener catches the `transcription-result` message and updates the chat input field with the received text.
 
 ## 4. What We've Done: Project History
 
