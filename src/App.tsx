@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Camera, FileText, Send, Pencil, Mic, Plus } from "lucide-react";
@@ -18,6 +18,15 @@ function App() {
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [isBrushActive, setIsBrushActive] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
 
   // Activate selection tool in content script
   function activateSelection() {
@@ -188,6 +197,7 @@ function App() {
               )}
             </div>
           ))}
+          <div ref={messagesEndRef} />
         </div>
         <button
           className="new-chat-btn"
