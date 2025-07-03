@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { Camera, FileText, Send, Pencil, Mic } from "lucide-react";
+import { Camera, FileText, Send, Pencil, Mic, Plus } from "lucide-react";
 import "./App.css";
 
 // Helper to crop a base64 PNG dataUrl to a given rectangle
@@ -355,6 +355,17 @@ function App() {
               )}
             </div>
           ))}
+          <button
+            className="new-chat-btn"
+            onClick={() => {
+              setMessages([]);
+              setCapturedImage(null);
+            }}
+            disabled={loading}
+            title="Start New Chat"
+          >
+            <Plus size={20} />
+          </button>
         </div>
         <div className="input-area">
           <input

@@ -30,10 +30,32 @@ body {
   overflow-y: auto;
 }
 
+.new-chat-btn {
+  position: absolute; /* Changed to absolute */
+  bottom: 1rem; /* Distance from the bottom of the messages container */
+  right: 1rem;
+  background-color: var(--secondary-color); /* Solid background */
+  border: 1px solid var(--border-color);
+  color: var(--text-color);
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s;
+  z-index: 10; /* Ensure it's above messages */
+}
+
+.new-chat-btn:hover {
+  background-color: var(--hover-color);
+}
+
 .messages {
   flex-grow: 1;
   overflow-y: auto;
   padding-right: 1rem; /* For scrollbar */
+  position: relative; /* Make .messages a positioning context */
+  display: flex; /* Enable flexbox for align-self on button */
+  flex-direction: column; /* Stack messages vertically */
+  padding-bottom: 3rem; /* Add padding to make space for the button */
 }
 
 .message {
