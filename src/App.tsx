@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Camera, FileText, Send, Pencil, Mic, Plus } from "lucide-react";
-import "./App.css";
+
 import { useChatMessages } from "./hooks/useChatMessages";
 
 interface Message {
@@ -170,24 +170,24 @@ function App() {
   };
 
   return (
-    <div className="App">
-      <div className="chat-window">
-        <div className="messages">
+    <div className="flex flex-col h-screen bg-gray-900 text-gray-100">
+      <div className="flex-1 flex flex-col p-4 space-y-4 overflow-hidden">
+        <div className="flex-1 overflow-y-auto space-y-2 p-2 scrollbar-thumb-gray-700 scrollbar-track-gray-800 scrollbar-thin">
           {messages.map((msg, index) => (
-            <div key={index} className={`message ${msg.sender}`}>
+            <div key={index} className={`flex flex-col p-3 rounded-lg max-w-xs break-words ${msg.sender === 'user' ? 'ml-auto bg-blue-600 text-white rounded-br-none' : 'mr-auto bg-gray-700 text-gray-100 rounded-bl-none'}`}>
               {msg.image && (
                 <img
                   src={msg.image}
                   alt="captured content"
-                  className="captured-image"
+                  className="max-w-full h-auto rounded-md mb-2"
                 />
               )}
               {msg.sender === 'bot' ? (
                 msg.isTyping ? (
-                  <div className="typing-indicator">
-                    <span></span>
-                    <span></span>
-                    <span></span>
+                  <div className="flex space-x-1">
+                    <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></span>
+                    <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-150"></span>
+                    <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-300"></span>
                   </div>
                 ) : (
                   <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.text}</ReactMarkdown>
@@ -200,7 +200,7 @@ function App() {
           <div ref={messagesEndRef} />
         </div>
         <button
-          className="new-chat-btn"
+          className="absolute top-4 right-4 bg-gray-700 hover:bg-gray-600 p-2 rounded-full shadow-lg transition-colors duration-200 z-10"
           onClick={() => {
             setMessages([]);
             setCapturedImage(null);
@@ -210,7 +210,7 @@ function App() {
         >
           <Plus size={20} />
         </button>
-        <div className="input-area">
+        <div className="flex p-4 border-t border-gray-700 bg-gray-800 items-center space-x-2">
           <input
             type="text"
             value={input}
@@ -218,10 +218,11 @@ function App() {
             onKeyPress={(e) => e.key === "Enter" && handleSend()}
             placeholder={loading ? "Gemma is thinking..." : "Ask Gemma..."}
             disabled={loading}
+            className="flex-1 p-2 rounded-lg bg-gray-700 border border-gray-600 text-gray-100 placeholder-gray-400 focus:outline-none focus:border-blue-500"
           />
-          <div className="action-buttons">
+          <div className="flex space-x-2">
             <button
-              className="icon-btn"
+              className="p-2 rounded-full bg-blue-600 hover:bg-blue-700 text-white transition-colors duration-200 flex items-center justify-center"
               onClick={handleSend}
               disabled={loading}
               title="Send"
@@ -229,7 +230,7 @@ function App() {
               <Send size={20} />
             </button>
             <button
-              className="icon-btn"
+              className="p-2 rounded-full bg-blue-600 hover:bg-blue-700 text-white transition-colors duration-200 flex items-center justify-center"
               onClick={() => handleActionClick("captureScreen")}
               disabled={loading}
               title="Capture screen"
@@ -237,7 +238,7 @@ function App() {
               <Camera size={20} />
             </button>
             <button
-              className="icon-btn"
+              className="p-2 rounded-full bg-blue-600 hover:bg-blue-700 text-white transition-colors duration-200 flex items-center justify-center"
               onClick={() => handleActionClick("getText")}
               disabled={loading}
               title="Read page text"
@@ -245,20 +246,18 @@ function App() {
               <FileText size={20} />
             </button>
             <button
-              className={`icon-btn${isBrushActive ? ' active' : ''}`}
+              className={`p-2 rounded-full bg-blue-600 hover:bg-blue-700 text-white transition-colors duration-200 flex items-center justify-center ${isBrushActive ? 'bg-blue-500' : ''}`}
               onClick={activateSelection}
               disabled={loading}
               title={isBrushActive ? 'Deactivate brush selection tool' : 'Activate brush selection tool'}
-              style={isBrushActive ? { background: '#4f8cff', color: '#fff' } : {}}
             >
               <Pencil size={20} />
             </button>
             <button
-              className={`icon-btn${isRecording ? ' active' : ''}`}
+              className={`p-2 rounded-full bg-blue-600 hover:bg-blue-700 text-white transition-colors duration-200 flex items-center justify-center ${isRecording ? 'bg-red-500' : ''}`}
               onClick={handleMicrophoneClick}
               disabled={loading}
               title={isRecording ? 'Stop recording' : 'Start recording'}
-              style={isRecording ? { background: '#ff4f4f', color: '#fff' } : {}}
             >
               <Mic size={20} />
             </button>

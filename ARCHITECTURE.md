@@ -14,7 +14,7 @@ The architecture is composed of four main parts:
 
 - **Framework**: Built with **React** and **TypeScript** for a modern, type-safe user interface.
 - **Build Tool**: **Vite** is used for its fast development server and optimized build process, configured specifically for Chrome extension development.
-- **UI/UX**: The interface is a chat window with a sophisticated dark theme. It displays the conversation history, rendering the LLM's responses from Markdown to formatted HTML using **`react-markdown`**. Action buttons use icons from **`lucide-react`**.
+- **UI/UX**: The interface is a chat window with a sophisticated dark theme, styled using **Tailwind CSS** for utility-first styling. It displays the conversation history, rendering the LLM's responses from Markdown to formatted HTML using **`react-markdown`**. Action buttons use icons from **`lucide-react`**.
 - **Functionality**: It manages the application state (messages, loading status), sends user prompts to the LLM, and dispatches action requests (like "capture screen" or "activate brush") to other parts of the extension. It also handles image cropping and final communication with the LLM.
 
 ### b. Background Script (`background.ts`)
