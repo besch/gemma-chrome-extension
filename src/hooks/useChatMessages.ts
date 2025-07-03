@@ -72,7 +72,7 @@ export const useChatMessages = () => {
             {
               role: "user",
               content: [
-                { type: "text", text: "Analyze the content of this image." },
+                { type: "text", text: message.prompt || "Analyze the content of this image." },
                 { type: "image_url", image_url: { url: cropped } },
               ],
             },

@@ -95,7 +95,8 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
         chrome.runtime.sendMessage({
           type: 'cropAndAnalyze',
           dataUrl,
-          area: message.area
+          area: message.area,
+          prompt: message.prompt // Pass the custom prompt
         });
       });
     }

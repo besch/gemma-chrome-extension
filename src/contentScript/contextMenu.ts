@@ -50,19 +50,22 @@ export function showContextMenu(
     `;
     button.onmouseover = () => button.style.background = '#4a4a4a';
     button.onmouseout = () => button.style.background = '#3a3a3a';
-    button.onclick = () => {
-      onClick();
-      removeContextMenu();
-    };
+    button.onclick = onClick;
     return button;
   };
 
   // Analyze section button
-  const analyzeButton = createButton('Analyze selection', onAnalyzeClick);
+  const analyzeButton = createButton('Analyze selection', () => {
+    onAnalyzeClick();
+    removeContextMenu();
+  });
   contextMenu.appendChild(analyzeButton);
 
   // Clear selection button
-  const clearButton = createButton('Clear selection', onClearSelection);
+  const clearButton = createButton('Clear selection', () => {
+    onClearSelection();
+    removeContextMenu();
+  });
   contextMenu.appendChild(clearButton);
 
   // Custom prompt button and input
@@ -98,6 +101,7 @@ export function showContextMenu(
   const sendPromptButton = createButton('Send', () => {
     if (inputField.value.trim()) {
       onCustomPrompt(inputField.value.trim());
+      removeContextMenu(); // Close menu after sending custom prompt
     }
   });
   customPromptContainer.appendChild(sendPromptButton);
