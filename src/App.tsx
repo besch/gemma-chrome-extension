@@ -60,26 +60,29 @@ function App() {
       sender: "user",
       image: capturedImage || undefined,
     };
-    const newMessages = [...messages, userMessage];
+    // Show typing indicator
+    const newMessages: Message[] = [...messages, userMessage, { text: '', sender: 'bot', isTyping: true }];
     setMessages(newMessages);
 
-    // Prepare messages for the API
-    const apiMessages = newMessages.map((msg) => {
-      let content;
-      if (msg.image) {
-        content = [
-          { type: "text", text: msg.text },
-          { type: "image_url", image_url: { url: msg.image } },
-        ];
-      } else {
-        content = msg.text;
-      }
+    // Prepare messages for the API, filtering out the typing indicator
+    const apiMessages = newMessages
+      .filter(msg => !msg.isTyping)
+      .map((msg) => {
+        let content;
+        if (msg.image) {
+          content = [
+            { type: "text", text: msg.text },
+            { type: "image_url", image_url: { url: msg.image } },
+          ];
+        } else {
+          content = msg.text;
+        }
 
-      return {
-        role: msg.sender === "user" ? "user" : "assistant",
-        content: content,
-      };
-    });
+        return {
+          role: msg.sender === "user" ? "user" : "assistant",
+          content: content,
+        };
+      });
 
     setInput("");
     setCapturedImage(null);
@@ -172,7 +175,11 @@ function App() {
               )}
               {msg.sender === 'bot' ? (
                 msg.isTyping ? (
-                  <div className="loading-spinner"></div>
+                  <div className="typing-indicator">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                  </div>
                 ) : (
                   <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.text}</ReactMarkdown>
                 )
