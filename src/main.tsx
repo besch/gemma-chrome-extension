@@ -8,3 +8,6 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
     <App />
   </React.StrictMode>
 );
+
+// Establish a connection to the background script
+chrome.runtime.connect({ name: 'sidepanel-port' });

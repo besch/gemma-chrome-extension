@@ -4,6 +4,20 @@ chrome.sidePanel
   .setPanelBehavior({ openPanelOnActionClick: true })
   .catch((error) => console.error(error));
 
+chrome.runtime.onConnect.addListener((port) => {
+  if (port.name === 'sidepanel-port') {
+    port.onDisconnect.addListener(() => {
+      // Side panel has been closed, send message to content script
+      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        const activeTab = tabs[0];
+        if (activeTab && activeTab.id) {
+          chrome.tabs.sendMessage(activeTab.id, { type: 'deactivateSelection' });
+        }
+      });
+    });
+  }
+});
+
 chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
   if (message.type === 'start-recording' || message.type === 'stop-recording') {
     await createOffscreenDocument();
