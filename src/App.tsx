@@ -174,7 +174,7 @@ function App() {
       <div className="flex-1 flex flex-col p-4 space-y-4 overflow-hidden">
         <div className="flex-1 overflow-y-auto space-y-2 p-2 scrollbar-thumb-gray-700 scrollbar-track-gray-800 scrollbar-thin">
           {messages.map((msg, index) => (
-            <div key={index} className={`flex flex-col p-3 rounded-lg max-w-xs break-words ${msg.sender === 'user' ? 'ml-auto bg-blue-600 text-white rounded-br-none' : 'mr-auto bg-gray-700 text-gray-100 rounded-bl-none'}`}>
+            <div key={index} className={`flex flex-col p-3 rounded-lg break-words ${msg.sender === 'user' ? 'ml-auto bg-blue-600 text-white rounded-br-none' : 'mr-auto bg-gray-700 text-gray-100 rounded-bl-none'}`}>
               {msg.image && (
                 <img
                   src={msg.image}
