@@ -170,7 +170,7 @@ function App() {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-gray-900 text-gray-100">
+    <div className="flex flex-col h-screen bg-gray-800 text-gray-100">
       <div className="flex-1 flex flex-col p-4 space-y-4 overflow-hidden">
         <div className="flex-1 overflow-y-auto space-y-2 p-2 scrollbar-thumb-gray-700 scrollbar-track-gray-800 scrollbar-thin">
           {messages.map((msg, index) => (
@@ -200,7 +200,7 @@ function App() {
           <div ref={messagesEndRef} />
         </div>
         <button
-          className="absolute top-4 right-4 bg-gray-700 hover:bg-gray-600 p-2 rounded-full shadow-lg transition-colors duration-200 z-10"
+          className="absolute top-4 right-4 p-2 rounded-md border border-gray-600 text-gray-400 hover:bg-gray-700 hover:text-white shadow-lg transition-colors duration-200 z-10"
           onClick={() => {
             setMessages([]);
             setCapturedImage(null);
@@ -222,7 +222,7 @@ function App() {
           />
           <div className="flex space-x-2">
             <button
-              className="p-2 rounded-full bg-blue-600 hover:bg-blue-700 text-white transition-colors duration-200 flex items-center justify-center"
+              className="p-2 rounded-md border border-gray-600 text-gray-400 hover:bg-blue-600 hover:text-white transition-colors duration-200 flex items-center justify-center"
               onClick={handleSend}
               disabled={loading}
               title="Send"
@@ -230,7 +230,7 @@ function App() {
               <Send size={20} />
             </button>
             <button
-              className="p-2 rounded-full bg-blue-600 hover:bg-blue-700 text-white transition-colors duration-200 flex items-center justify-center"
+              className="p-2 rounded-md border border-gray-600 text-gray-400 hover:bg-blue-600 hover:text-white transition-colors duration-200 flex items-center justify-center"
               onClick={() => handleActionClick("captureScreen")}
               disabled={loading}
               title="Capture screen"
@@ -238,7 +238,7 @@ function App() {
               <Camera size={20} />
             </button>
             <button
-              className="p-2 rounded-full bg-blue-600 hover:bg-blue-700 text-white transition-colors duration-200 flex items-center justify-center"
+              className="p-2 rounded-md border border-gray-600 text-gray-400 hover:bg-blue-600 hover:text-white transition-colors duration-200 flex items-center justify-center"
               onClick={() => handleActionClick("getText")}
               disabled={loading}
               title="Read page text"
@@ -246,7 +246,7 @@ function App() {
               <FileText size={20} />
             </button>
             <button
-              className={`p-2 rounded-full bg-blue-600 hover:bg-blue-700 text-white transition-colors duration-200 flex items-center justify-center ${isBrushActive ? 'bg-blue-500' : ''}`}
+              className={`p-2 rounded-md border transition-colors duration-200 flex items-center justify-center ${isBrushActive ? 'bg-blue-600 text-white border-blue-600' : 'bg-transparent text-gray-400 border-gray-600 hover:bg-blue-600 hover:text-white'}`}
               onClick={activateSelection}
               disabled={loading}
               title={isBrushActive ? 'Deactivate brush selection tool' : 'Activate brush selection tool'}
@@ -254,7 +254,7 @@ function App() {
               <Pencil size={20} />
             </button>
             <button
-              className={`p-2 rounded-full bg-blue-600 hover:bg-blue-700 text-white transition-colors duration-200 flex items-center justify-center ${isRecording ? 'bg-red-500' : ''}`}
+              className={`p-2 rounded-md border transition-colors duration-200 flex items-center justify-center ${isRecording ? 'bg-blue-600 text-white border-blue-600' : 'bg-transparent text-gray-400 border-gray-600 hover:bg-blue-600 hover:text-white'}`}
               onClick={handleMicrophoneClick}
               disabled={loading}
               title={isRecording ? 'Stop recording' : 'Start recording'}
